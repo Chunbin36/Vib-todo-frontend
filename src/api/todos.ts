@@ -48,11 +48,24 @@ export function coerceTodo(raw: unknown): Todo {
   }
 }
 
+function normalizeBackendOrigin(raw: string): string {
+  let u = raw.trim().replace(/\/$/, '')
+  // .../todos 만 넣은 경우 /api/todos 와 합쳐져 /todos/api/todos 가 되어 404 → 호스트만 남김
+  if (u.endsWith('/todos') && !u.endsWith('/api/todos')) {
+    u = u.slice(0, -'/todos'.length).replace(/\/$/, '')
+  }
+  return u
+}
+
 function apiBase(): string {
   const explicit = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, '')
   if (explicit) return explicit
-  const base = typeof API_URL === 'string' ? API_URL.trim().replace(/\/$/, '') : ''
-  if (base) return `${base}/api/todos`
+  const base =
+    typeof API_URL === 'string' ? normalizeBackendOrigin(API_URL) : ''
+  if (base) {
+    if (base.endsWith('/api/todos')) return base
+    return `${base}/api/todos`
+  }
   if (import.meta.env.DEV) return '/api/todos'
   return 'http://localhost:5000/api/todos'
 }
