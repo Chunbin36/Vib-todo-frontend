@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '../config'
+const API_URL = import.meta.env.VITE_BACKEND_URL
 
 export type Todo = {
   _id?: string
@@ -49,7 +49,12 @@ export function coerceTodo(raw: unknown): Todo {
 }
 
 function apiBase(): string {
-  return getApiBaseUrl()
+  const explicit = import.meta.env.VITE_API_BASE_URL?.trim().replace(/\/$/, '')
+  if (explicit) return explicit
+  const base = typeof API_URL === 'string' ? API_URL.trim().replace(/\/$/, '') : ''
+  if (base) return `${base}/api/todos`
+  if (import.meta.env.DEV) return '/api/todos'
+  return 'http://localhost:5000/api/todos'
 }
 
 async function readError(res: Response): Promise<string> {
